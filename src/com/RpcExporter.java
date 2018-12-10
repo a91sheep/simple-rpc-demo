@@ -11,6 +11,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
+ * 发布注册
+ *
  * @author <a href="mailto:linxh@59store.com">linxiaohui</a>
  * @version 1.0 16/12/16
  * @since 1.0
@@ -18,12 +20,12 @@ import java.util.concurrent.Executors;
 public class RpcExporter {
     private static Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-    public static void exporter(String hostName, int port) throws IOException {
+    public static void exporter(Object service, String hostName, int port) throws IOException {
         ServerSocket server = new ServerSocket();
         server.bind(new InetSocketAddress(hostName, port));
         try {
             while (true) {
-                executor.execute(new ExporterTask(server.accept()));
+                executor.execute(new ExporterTask(service, server.accept()));
             }
         } finally {
             server.close();
@@ -31,10 +33,12 @@ public class RpcExporter {
     }
 
     public static class ExporterTask implements Runnable {
-        Socket client = null;
+        Socket client  = null;
+        Object service = null;
 
-        public ExporterTask(Socket client) {
+        public ExporterTask(Object service, Socket client) {
             this.client = client;
+            this.service = service;
         }
 
         @Override
@@ -44,12 +48,17 @@ public class RpcExporter {
             try {
                 input = new ObjectInputStream(client.getInputStream());
                 String interfaceName = input.readUTF();
-                Class<?> service = Class.forName(interfaceName);
+                System.out.println("服务端------收到客户端调用" + interfaceName + "的RPC请求");
+
                 String methodName = input.readUTF();
                 Class<?>[] parameterTypes = (Class<?>[]) input.readObject();
                 Object[] arguments = (Object[]) input.readObject();
-                Method method = service.getMethod(methodName, parameterTypes);
-                Object result = method.invoke(service.newInstance(), arguments);
+                if (interfaceName.equals(service.getClass().getInterfaces()[0].getName())) {
+                    System.out.println("服务端------接口匹配成功...");
+                }
+                Method method = service.getClass().getMethod(methodName, parameterTypes);
+                Object result = method.invoke(service, arguments);
+                System.out.println("服务端------反射结果:" + result);
                 output = new ObjectOutputStream(client.getOutputStream());
                 output.writeObject(result);
             } catch (Exception e) {

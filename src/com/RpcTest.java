@@ -17,14 +17,18 @@ public class RpcTest {
             @Override
             public void run() {
                 try {
-                    RpcExporter.exporter("localhost", 8080);
+                    //Provider发布了一个服务
+                    EchoService echoService = new EchoServiceImpl();
+                    RpcExporter.exporter(echoService, "localhost", 8080);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }).start();
+
+        //Consumer调用一个服务
         RpcImporter<EchoService> importer = new RpcImporter<EchoService>();
-        EchoService echo = importer.importer(EchoServiceImpl.class, new InetSocketAddress("localhost", 8080));
-        System.out.println(echo.echo("Are you ok ?"));
+        EchoService echo = importer.importer(EchoService.class, new InetSocketAddress("localhost", 8080));
+        System.out.println("客户端------代理类收到结果:" + echo.echo("Are you ok ?"));
     }
 }

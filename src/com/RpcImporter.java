@@ -9,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
+ * 服务发现
  * @author <a href="mailto:linxh@59store.com">linxiaohui</a>
  * @version 1.0 16/12/16
  * @since 1.0
@@ -17,7 +18,7 @@ public class RpcImporter<S> {
     public S importer(final Class<?> serviceClass, final InetSocketAddress addr)
 
     {
-        return (S) Proxy.newProxyInstance(serviceClass.getClassLoader(), new Class<?>[]{serviceClass.getInterfaces()[0]},
+        return (S) Proxy.newProxyInstance(serviceClass.getClassLoader(), new Class<?>[]{serviceClass},
                 new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
